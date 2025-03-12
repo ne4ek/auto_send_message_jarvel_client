@@ -8,11 +8,20 @@ load_dotenv()
 
 api_id = os.getenv("API_ID")
 api_hash = os.getenv("API_HASH")
+ALOW_IDS_str = os.getenv("ALOW_IDS")
+if ALOW_IDS_str:
+    id_list = ALOW_IDS_str.split(",")
+    ALOW_IDS = [int(id.strip()) for id in id_list]
+else:
+    ALOW_IDS = []
 
 
 client = TelegramClient('user_session.session', api_id, api_hash, device_model='Custom Device', system_version='Custom OS')
 
-link = "https://docs.google.com/presentation/d/131zIIWNSkh6XKrf15oc40yfSPbNc1SiSkqck7eQLEYk/edit?pli=1#slide=id.g33f141938f8_3_115"
+
+
+
+
 
 main_text = '''
                 HI! 🌞
@@ -34,7 +43,7 @@ You've got it because @OrangeRedLeo/@reallyAI give me access to you telegram ID 
 I'll try to do my best to help your communication 😊
 '''
 
-presentation_text = f'''
+presentation_text = '''
                 ✨ Также хотела сообщить, что прямо сейчас мой пользователь выступает на конференции со своей чудо-презентацией! 🎤📊
 
 🔗 Вот ссылка: {link}
@@ -46,20 +55,47 @@ presentation_text = f'''
 '''
 keyword = "през"
 
+
 @client.on(events.NewMessage)
 async def handler(event):
     ic(event)
     if event.is_private and not event.out:
         try:
             user = await client.get_entity(event.sender_id)
-            ic(user)
             event_text = event.text.lower().strip()
+            event_text_splited = event_text.split()
+            presentation_text_formated = presentation_text.format(link=get_link())
             if keyword in event_text:
-                await event.reply(presentation_text)
+                await event.reply(presentation_text_formated)
+            elif event_text_splited[0] == "/replace_link":
+                if len(event_text_splited) != 2:
+                    await event.reply("Ведите ссылку в формате '/replace_link ссылка'")
+                else:
+                    link = event_text_splited[1]
+                    write_link(link)
+                    await event.reply(f"Записала {link}")
+                return 
+            elif event_text_splited[0] == "/get_link":
+                link = get_link()
+                await event.reply(link)
+                return  
         except Exception as e:
             await event.reply(main_text)
-            await event.reply(presentation_text)
+            await event.reply(presentation_text_formated)
+            raise e
             
+            
+def write_link(link: str):
+    with open("link", "w", encoding="utf-8") as file:
+        file.write(link)
+        
+def get_link(path="link"):
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as file:
+            data = file.read().strip()
+            return data
+    else:
+        return "link_not_defined"
             
 async def main():
     print("Запускаем клиент. Авторизуйтесь, если потребуется.")

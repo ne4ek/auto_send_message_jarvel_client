@@ -137,3 +137,5 @@ src/test.py
 *.log
 
 *.session
+*.session-journal
+link
